@@ -1,4 +1,4 @@
-import re, os
+import re, os, multiprocessing
 import App
 import Scheduler
 import MMU
@@ -7,6 +7,7 @@ if __name__ == '__main__':
 	scheduler = None
 	mmu = None
 	apps = []
+	app_locks = []
 	#configure scheduler
 	with open('config_scheduler.txt') as f:
 		config_scheduler = {}
@@ -19,13 +20,15 @@ if __name__ == '__main__':
 		config_mmu = {}
 		for header,value in re.findall(r'(\w+)=(["\w+]+)',f.read()):
 			config_mmu[header]=eval(value)
-		mmu = MMU.MMU(**config_mmu)
+		mmu = MMU.MMU(scheduler.C, **config_mmu)
 
 	#configure apps
 	for app in open('config_app.txt'):
 		config_app = {}
+		app_lock = multiprocessing.Lock()
+		app_locks.append(app_lock)
 		for header,value in re.findall(r'(\w+)=(["\w+]+)',app):
 			config_app[header]=eval(value)
-		apps.append(App.App(**config_app))
+		apps.append(App.App(app_lock, **config_app))
 		# print(app[0].get_ident())
-		# scheduler.admit_app(app.get_ident())
+		scheduler.admit_app(app.get_ident(), app_lock)

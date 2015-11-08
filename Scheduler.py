@@ -11,8 +11,17 @@ class Scheduler(multiprocessing.Process):
 		self.display()		
 		self.start()
 
+	def run(self):
+		while True:
+			'''
+				on run_scheduler() call from mmu
+					ready.enqueue(ready.dequeue())
+					ready.top()
+			'''
+			pass
+
 	def admit_app(self,app):
-		self.app.append(app)
+		self.apps.append(app)
 
 	def display(self):
 		print('Scheduler details(C):',self.C)
