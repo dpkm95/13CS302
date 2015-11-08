@@ -7,7 +7,11 @@ class Scheduler(multiprocessing.Process):
 	def __init__(self,**kwargs):
 		super().__init__(self)
 		self.C = kwargs['C']
-		print('Scheduler started, pid:',os.getpid())
+
+		self.manager = multiprocessing.Manager()
+		self.run_scheduler = self.manager.Condition()
+
+		print('Scheduler log: Scheduler started, pid:',os.getpid())
 		self.display()		
 		self.start()
 
@@ -18,10 +22,13 @@ class Scheduler(multiprocessing.Process):
 					ready.enqueue(ready.dequeue())
 					ready.top()
 			'''
-			pass
+			while self.run_scheduler:
+				self.run_scheduler.wait()
+				#scheculer functionality - round robin algorithm
+				pass
 
-	def admit_app(self,app):
-		self.apps.append(app)
+	def admit_app(self, app_id, app_lock):
+		self.apps.append((app_id,app_lock))
 
 	def display(self):
-		print('Scheduler details(C):',self.C)
+		print('Scheduler log: Scheduler details(C):',self.C)
