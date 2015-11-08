@@ -6,7 +6,7 @@ import Scheduler
 #N 	 - number of page references made by the App
 class App(multiprocessing.Process):
 	# app_count = 0
-	def __init__(self, app_lock, mmu, **kwargs):
+	def __init__(self, app_lock, scheduler, mmu, **kwargs):
 		super().__init__(self)
 		# App.app_count += 1
 		# self.app_id = App.app_count
@@ -15,6 +15,7 @@ class App(multiprocessing.Process):
 		self.V = kwargs['V']
 		self.N = kwargs['N']
 		self.mmu = mmu
+		self.scheduler = scheduler
 		self.references_count = 0
 		print('App log: App',self.App,'started, pid:',os.getpid())
 		self.display()		
@@ -22,9 +23,13 @@ class App(multiprocessing.Process):
 
 	def run(self):
 		while True:
+			self.mmu.scheduler_free.acquire()
 			app_lock.acquire()
+			self.mmu.scheduler_free.release()
 			if self.references_count < self.N:
 				generate_page_request()
+			else:
+				self.scheduler.release_app(os.getpid())
 			app_lock.release()				
 
 	def generate_page_request(self):

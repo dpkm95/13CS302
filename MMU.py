@@ -15,9 +15,10 @@ class MMU(multiprocessing.Process):
 		self.Taccess = kwargs['Taccess']
 		self.scheduler = scheduler
 
-		self.mmu_manager = multiprocessing.Manager()
-		self.page_fetched = mmu_manager.Condition()
-		self.request_queue = mmu_manager.Queue()
+		self.manager = multiprocessing.Manager()
+		self.page_fetched = manager.Condition()
+		self.request_queue = manager.Queue()
+		self.scheduler_free = manager.Lock()
 
 		self.request_count = 0
 		self.hit_count = 0
@@ -29,12 +30,14 @@ class MMU(multiprocessing.Process):
 
 	def run(self):
 		while True:
-			target_page = self.request_queue.get()
+			target_page = self.request_queue.get()			
+			get_page_log(target_page)
 			if self.check_tlb(target_page)
 				self.task_tlb_access(target_page)
 				self.generate_physical_address(target_page)
 				if self.request_count % self.scheduler.C == 0:
 					self.flush_tlb()
+					self.scheduler_free.acquire()
 					self.scheduler.run_scheduler.notify()
 			else self.check_ram(target_page):						
 				self.task_ram_access(target_page)
@@ -42,13 +45,15 @@ class MMU(multiprocessing.Process):
 				self.generate_physical_address(target_page)
 				if self.request_count % self.scheduler.C == 0:
 					self.flush_tlb()
+					self.scheduler_free.acquire()
 					self.scheduler.run_scheduler.notify()
 			else:
 				self.task_disk_access(target_page)
 				self.update_page_table(target_page)
 				self.request_queue.put(target_page)
 
-	def get_page(self, target_page):
+	def get_page_log(self, target_page):
+		# self.request_count += 1
 		print('MMU log:','servicing page request',target_page)
 
 	def generate_physical_address(self, target_page):

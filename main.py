@@ -20,7 +20,8 @@ if __name__ == '__main__':
 		config_mmu = {}
 		for header,value in re.findall(r'(\w+)=(["\w+]+)',f.read()):
 			config_mmu[header]=eval(value)
-		mmu = MMU.MMU(scheduler, **config_mmu)		
+		mmu = MMU.MMU(scheduler, **config_mmu)
+		scheduler.mmu = mmu	
 
 	#configure apps
 	for app in open('config_app.txt'):
@@ -30,5 +31,12 @@ if __name__ == '__main__':
 		app_locks.append(app_lock)
 		for header,value in re.findall(r'(\w+)=(["\w+]+)',app):
 			config_app[header]=eval(value)
-		apps.append(App.App(app_lock, mmu, **config_app))
+		apps.append(App.App(app_lock, scheduler, mmu, **config_app))
 		scheduler.admit_app(app.get_ident(), app_lock)
+
+	#start first app
+	first_app = scheduler.schedule_one()
+	if first_app != -1:
+		print('main log: first app started',first_app)
+	else:
+		print('main log: no apps to schedule')
