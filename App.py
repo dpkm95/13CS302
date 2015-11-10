@@ -1,44 +1,56 @@
-import multiprocessing,os
+import multiprocessing, os, random
 import Scheduler
 
 #App - app name
 #V 	 - total no of unique virtual pages
-#N 	 - number of page references made by the App
+#N 	 - number of page requests made by the App
 class App(multiprocessing.Process):
-	# app_count = 0
-	def __init__(self, app_lock, scheduler, mmu, **kwargs):
-		super().__init__(self)
-		# App.app_count += 1
-		# self.app_id = App.app_count
+	def __init__(self, app_lock, run_scheduler, scheduler_free, 
+					request_queue, page_fetched, **kwargs):
+		super().__init__()
 		self.app_lock = app_lock
 		self.name = kwargs['App']
 		self.V = kwargs['V']
 		self.N = kwargs['N']
-		self.mmu = mmu
-		self.scheduler = scheduler
-		self.references_count = 0
-		print('App log: App',self.App,'started, pid:',os.getpid())
+
+		self.request_count = 0
+
+		self.run_scheduler = run_scheduler
+		self.scheduler_free = scheduler_free
+		self.request_queue = request_queue
+		self.page_fetched = page_fetched
+		
 		self.display()		
 		self.start()
 
 	def run(self):
-		while True:
-			self.mmu.scheduler_free.acquire()
-			app_lock.acquire()
-			self.mmu.scheduler_free.release()
-			if self.references_count < self.N:
-				generate_page_request()
+		release_app = False
+		print('app log(',self.pid,'): app',self.name,'started')
+		while True:			
+			self.app_lock.acquire()
+			self.scheduler_free.release()		
+			if self.request_count < self.N:
+				self.generate_page_request()
 			else:
-				self.scheduler.release_app(os.getpid())
-			app_lock.release()				
+				self.scheduler_free.acquire()
+				release_app = True
+			self.app_lock.release()
+			if release_app:
+				release_app = False
+				self.run_scheduler.put(self.pid)
+				break
+			self.scheduler_free.acquire()
+		print('app log(',self.pid,'): app',self.name,'terminated')
 
 	def generate_page_request(self):
-		page = random.rand(self.V)
-		print('App log: page requested-',page,'; request count-',self.references_count+1)
-		while self.mmu.page_fetched:			
-			self.mmu.request_queue.put(page)
-			self.mmu.page_fetched.wait()
-			print('App log: recieved page',page)
+		self.request_count += 1
+		page = random.randint(0,self.V)
+		print('app log(',self.pid,'): page',page,'requested; request count',
+				self.request_count)
+		with self.page_fetched:			
+			self.request_queue.put(page)
+			self.page_fetched.wait()
+			print('app log(',self.pid,'): page',page,'recieved')
 
 	def display(self):
-		print('App log: App Details(App name, V, N):',self.App, self.V, self.N)
+		print('app log: App Details(App name, V, N):',self.name, self.V, self.N)

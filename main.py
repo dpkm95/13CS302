@@ -1,42 +1,47 @@
-import re, os, multiprocessing
+import re
+import os
+import multiprocessing
 import App
 import Scheduler
 import MMU
 
 if __name__ == '__main__':
-	scheduler = None
-	mmu = None
 	apps = []
-	app_locks = []
+	scheduler = None
+	mmu = None	
+
+	run_scheduler = multiprocessing.Queue()
+	page_fetched = multiprocessing.Condition()
+	request_queue = multiprocessing.Queue()
+	scheduler_free = multiprocessing.Semaphore(1)
+	scheduler_free.acquire()
+
+	#configure apps
+	for app in open('config_app.txt'):
+		config_app = {}
+		app_lock = multiprocessing.Semaphore(1)
+		app_lock.acquire()
+		for header,value in re.findall(r'(\w+)=(["\w+]+)',app):
+			config_app[header]=eval(value)
+		new_app = App.App(app_lock, run_scheduler, scheduler_free, 
+							request_queue, page_fetched, **config_app)
+		apps.append((new_app.pid, app_lock))
+
 	#configure scheduler
 	with open('config_scheduler.txt') as f:
 		config_scheduler = {}
 		for header,value in re.findall(r'(\w+)=(["\w+]+)',f.read()):
 			config_scheduler[header]=eval(value)
-		scheduler = Scheduler.Scheduler(**config_scheduler)
+		scheduler = Scheduler.Scheduler(run_scheduler, scheduler_free,
+											apps, **config_scheduler)
 
 	#configure mmu
 	with open('config_mmu.txt') as f:
 		config_mmu = {}
 		for header,value in re.findall(r'(\w+)=(["\w+]+)',f.read()):
 			config_mmu[header]=eval(value)
-		mmu = MMU.MMU(scheduler, **config_mmu)
-		scheduler.mmu = mmu	
+		mmu = MMU.MMU(scheduler.C, page_fetched, request_queue,
+						 scheduler_free, **config_mmu)
 
-	#configure apps
-	for app in open('config_app.txt'):
-		config_app = {}
-		app_lock = multiprocessing.Lock()
-		app_lock.acquire()
-		app_locks.append(app_lock)
-		for header,value in re.findall(r'(\w+)=(["\w+]+)',app):
-			config_app[header]=eval(value)
-		apps.append(App.App(app_lock, scheduler, mmu, **config_app))
-		scheduler.admit_app(app.get_ident(), app_lock)
-
-	#start first app
-	first_app = scheduler.schedule_one()
-	if first_app != -1:
-		print('main log: first app started',first_app)
-	else:
-		print('main log: no apps to schedule')
+	#schedule first app
+	scheduler.schedule_one()
