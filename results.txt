@@ -1,0 +1,54 @@
+Configuration-
+	config_apps:
+		App="ps",V=3,N=10000
+		App="ls",V=5,N=100000
+
+	config_scheduler:
+		C=1000000
+
+	config_mmu:
+		P=8, Phit=200, Pmiss=800000, T=4, Taccess=20
+
+------------------------------------------------------
+Trial 1 Results:
+
+	page faults recorded         = 33091
+	page requests recorded       = 110000
+	total access time recorded   = 26497661820 us
+
+
+	page fault rate              = 0.3 fault/request
+	effective memory access time = 240887.83 us
+	number of page faults        = 33091
+
+------------------------------------------------------
+Trial 2 Results:
+
+	page faults recorded         = 33231
+	page requests recorded       = 110000
+	total access time recorded   = 26609664620 us
+
+
+	page fault rate              = 0.3 fault/request
+	effective memory access time = 241906.04 us
+	number of page faults        = 33231
+
+------------------------------------------------------
+Trial 3 Results:
+
+	page faults recorded         = 33325
+	page requests recorded       = 110000
+	total access time recorded   = 26684866500 us
+
+
+	page fault rate              = 0.3 fault/request
+	effective memory access time = 242589.7 us
+	number of page faults        = 33325
+
+------------------------------------------------------
+
+Average:
+
+	page fault rate              = 0.3 fault/request
+	effective memory access time = 241794.52 us
+	number of page faults        = 33216
