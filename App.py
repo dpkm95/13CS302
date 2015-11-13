@@ -26,7 +26,7 @@ class App(multiprocessing.Process):
 
 	def run(self):
 		release_app = False
-		print('app log(',self.pid,'): app',self.name,'started')
+		# print('app log(',self.pid,'): app',self.name,'started')
 		while True:	
 			self.app_lock.acquire()
 			self.scheduler_free.release()		
@@ -40,20 +40,21 @@ class App(multiprocessing.Process):
 			if release_app:
 				release_app = False
 				self.run_scheduler.put(self.pid)
-				print('app log(',self.pid,'): stopping app',self.name)
+				# print('app log(',self.pid,'): stopping app',self.name)
 				break
 			self.scheduler_free.acquire()
-		print('app log(',self.pid,'): app',self.name,'terminated')
+		# print('app log(',self.pid,'): app',self.name,'terminated')
 
 	def generate_page_request(self):
 		self.request_count += 1
 		page = random.randint(0,self.V)
-		print('app log(',self.pid,'): page',page,'requested; request count', self.request_count)
+		# print('app log(',self.pid,'): page',page,'requested; request count', self.request_count)
 		with self.page_fetched:			
 			self.request_queue.put(page)
+			self.request_queue.put(self.pid)
 			self.page_fetched.wait()
-			print('app log(',self.pid,'): page',page,'recieved')
+			# print('app log(',self.pid,'): page',page,'recieved')
 
 	def display(self):
-		print('app log: App Details(App name, V, N):',self.name, self.V, self.N)
+		# print('app log: App Details(App name, V, N):',self.name, self.V, self.N)
 		pass

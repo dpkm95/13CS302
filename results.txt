@@ -12,43 +12,43 @@ Configuration-
 ------------------------------------------------------
 Trial 1 Results:
 
-	page faults recorded         = 33091
+	page faults recorded         = 16599
 	page requests recorded       = 110000
-	total access time recorded   = 26497661820 us
+	total access time recorded   = 13313685180 us
 
 
-	page fault rate              = 0.3 fault/request
-	effective memory access time = 240887.83 us
-	number of page faults        = 33091
+	page fault rate              = 0.15 faults/request
+	effective memory access time = 121033.5 us
+	number of TLB misses         = 33167
 
 ------------------------------------------------------
 Trial 2 Results:
 
-	page faults recorded         = 33231
+	page faults recorded         = 16754
 	page requests recorded       = 110000
-	total access time recorded   = 26609664620 us
+	total access time recorded   = 13437793080 us
 
 
-	page fault rate              = 0.3 fault/request
-	effective memory access time = 241906.04 us
-	number of page faults        = 33231
+	page fault rate              = 0.15 faults/request
+	effective memory access time = 122161.76 us
+	number of TLB misses         = 33536
 
 ------------------------------------------------------
 Trial 3 Results:
 
-	page faults recorded         = 33325
+	page faults recorded         = 16667
 	page requests recorded       = 110000
-	total access time recorded   = 26684866500 us
+	total access time recorded   = 13368099340 us
 
 
-	page fault rate              = 0.3 fault/request
-	effective memory access time = 242589.7 us
-	number of page faults        = 33325
+	page fault rate              = 0.15 faults/request
+	effective memory access time = 121528.18 us
+	number of TLB misses         = 33163
 
 ------------------------------------------------------
 
 Average:
 
-	page fault rate              = 0.3 fault/request
-	effective memory access time = 241794.52 us
-	number of page faults        = 33216
+	page fault rate              = 0.15 fault/request
+	effective memory access time = 121574.48 us
+	number of page faults        = 33289
