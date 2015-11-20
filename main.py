@@ -1,5 +1,5 @@
 import re
-import os
+import os, time
 import multiprocessing
 import App
 import Scheduler
@@ -10,9 +10,9 @@ if __name__ == '__main__':
 	scheduler = None
 	mmu = None	
 
-	run_scheduler = multiprocessing.Queue()
+	run_scheduler = multiprocessing.Queue() # Used by Scheduler
 	page_fetched = multiprocessing.Condition()
-	request_queue = multiprocessing.Queue()
+	request_queue = multiprocessing.Queue() # Used by MMU
 	scheduler_free = multiprocessing.Semaphore(1)
 	scheduler_free.acquire()
 	app_release = multiprocessing.Semaphore(1)

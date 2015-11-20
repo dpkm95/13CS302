@@ -19,7 +19,7 @@ class Scheduler(multiprocessing.Process):
 			call = self.run_scheduler.get()
 			if call == -1: #run round robin scheduling algorithm				
 				self.app_release.acquire()
-				# print('sch log:------------running scheduling algorithm------------')
+				#print('sch log:------------running scheduling algorithm------------')
 				self.ready_apps[0][1].acquire()
 				dequeue = self.ready_apps.pop(0)
 				self.ready_apps.append(dequeue)
@@ -27,17 +27,17 @@ class Scheduler(multiprocessing.Process):
 				self.scheduler_free.release()
 				self.app_release.release()
 			else: #release app
-				# print('sch log: -------------------releasing app-------------------')
+				#print('sch log: -------------------releasing app-------------------')
 				app_id = call
 				for i,app in enumerate(self.ready_apps):
 					if app[0] == app_id:
 						app[1].acquire()
 						self.ready_apps.pop(i)
 				if len(self.ready_apps) == 0:
-					# print('All jobs are completed')
+					#print('All jobs are completed')
 					self.request_queue.put(-2)
 					self.request_queue.put(self.pid)
-					# print('sch log: stopping scheduler')
+					#print('sch log: stopping scheduler')
 					break
 				else:
 					self.ready_apps[0][1].release()
@@ -45,14 +45,12 @@ class Scheduler(multiprocessing.Process):
 	def schedule_one(self):
 		if len(self.ready_apps) != 0:
 			self.ready_apps[0][1].release()
-			# print('sch log: first app ',self.ready_apps[0][0],'scheduled')
+			#print('sch log: first app ',self.ready_apps[0][0],'scheduled')
 		else:
-			# print('sch log: no apps to schedule')
+			#print('sch log: no apps to schedule')
 			pass
 
-	def admit_app(self, app_id, app_lock):
-		self.ready_apps.append((app_id,app_lock))
 
 	def display(self):
-		# print('sch log: Scheduler details(C):',self.C)
+		#print('sch log: Scheduler details(C):',self.C)
 		pass

@@ -21,3 +21,13 @@ This is a simple python simulation of memory management in a paging system using
 	- Scheduler is called for every C page requests/ on release of an App.
   * MMU
     - Page tables of all processes is located in page-1 in ram.
+
+##Results:
+![Alt text](/results/c_hr_fr.png?raw=true "Effect of C on Hit rate and Fault rate")
+![Alt text](/results/processesCount_hr_fr.png?raw=true "Effect of no. of processes on Hit rate and Falut rate")
+![Alt text](/results/p_hr.png?raw=true "Effect of P on Hit rate")
+![Alt text](/results/t_hr.png?raw=true "Effect of T on Hit rate")
+![Alt text](/results/p_fr.png?raw=true "Effect of P on Fault rate")
+![Alt text](/results/t_fr.png?raw=true "Effect of T on Fault rate")
+![Alt text](/results/p_eat.png?raw=true "Effect of P on Effective access time")
+![Alt text](/results/t_eat.png?raw=true "Effect of T on Effective access time")

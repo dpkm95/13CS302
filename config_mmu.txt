@@ -1,1 +1,1 @@
-P=8, Phit=200, Pmiss=800000, T=4, Taccess=20
+P=8, Phit=200, Pmiss=800000, T=256, Taccess=20

@@ -40,6 +40,7 @@ class MMU(multiprocessing.Process):
 		self.total_access_time = 0
 		self.service_start_time = 0
 		self.updated_count = False
+		self.tlb_hit_count = 0
 
 		self.tlb_hashmap = dict()
 		self.ram_hashmap = dict()
@@ -48,7 +49,7 @@ class MMU(multiprocessing.Process):
 		self.start()
 
 	def run(self):
-		# print('mmu log: MMU started, pid', self.pid)
+		#print('mmu log: MMU started, pid', self.pid)
 		while True:			
 			target_page = self.request_queue.get()
 			app_id = self.request_queue.get()
@@ -85,83 +86,89 @@ class MMU(multiprocessing.Process):
 					self.request_queue.put(app_id)
 
 	def print_result(self):
-		print('mmu log: stopping mmu')
+		# print('mmu log: stopping mmu')
 		print('\nResults:\n')
 		print('page faults recorded         =',self.page_fault_count)
 		print('page requests recorded       =',self.request_count)
 		print('total access time recorded   =',self.total_access_time,'us')
+		print('tlb hit rate                 =',round(self.tlb_hit_count/self.request_count,2),'hit/request')
 		print('\n')
-		print('page fault rate              =',round((self.page_fault_count)/self.request_count,2),'faults/request')
+		print('page fault rate              =',round(self.page_fault_count/self.request_count,2),'faults/request')
 		print('effective memory access time =',round(self.total_access_time/self.request_count,2),'us')
 		print('number of TLB misses         =',self.tlb_miss_count)
 
 	def check_tlb(self,target_page):
 		self.total_access_time += self.Taccess
 		if target_page in self.tlb_hashmap:
-			# print('mmu log: tlb hit on page',target_page)		
+			#print('mmu log: tlb hit on page',target_page)		
 			return True			
 		else: 
-			# print('mmu log: tlb miss on page',target_page)
+			#print('mmu log: tlb miss on page',target_page)
 			return False
 
 	def check_page_table(self,target_page, app_id):
 		self.total_access_time += self.Phit
 		if (target_page, app_id) in self.ram_hashmap:
-			# print('mmu log: page table hit on page',target_page)		
+			#print('mmu log: page table hit on page',target_page)		
 			return True			
 		else: 
-			# print('mmu log: page table miss on page',target_page)
+			#print('mmu log: page table miss on page',target_page)
 			return False
 
 	def task_tlb_access(self, target_page):					
 		self.tlb_hashmap[target_page] = time.time()
-		# print('mmu log: tlb accessed; total_access_time =',self.total_access_time)	
+		#print('mmu log: tlb accessed; total_access_time =',self.total_access_time)	
 
 	def task_ram_access(self, target_page, app_id):
 		self.tlb_miss_count += 1
 		self.ram_hashmap[(target_page, app_id)] = time.time()
-		# print('mmu log: ram accessed by',app_id,'; total_access_time =',self.total_access_time)
+		#print('mmu log: ram accessed by',app_id,'; total_access_time =',self.total_access_time)
 
 	def flush_tlb(self):
-		# print('mmu log: tlb flushed')
+		#print('mmu log: tlb flushed')
 		self.tlb_hashmap = dict()
 
 	def task_disk_access(self, target_page):
 		self.page_fault_count += 1
 		self.total_access_time += self.Pmiss
-		# print('mmu log: disk accessed; total_access_time =',self.total_access_time)		
+		#print('mmu log: disk accessed; total_access_time =',self.total_access_time)		
 
 	def update_tlb(self, target_page):		
 		if len(self.tlb_hashmap) < self.T:
 			self.tlb_hashmap[target_page] = time.time()
 		else:
-			evicted_entry = collections.OrderedDict(sorted(self.tlb_hashmap.items(), reverse = True)).popitem()
+			evicted_entry = collections.OrderedDict(sorted(self.tlb_hashmap.items())).popitem(0)
 			del self.tlb_hashmap[evicted_entry[0]]
 			self.tlb_hashmap[target_page] = time.time()
-		# print('mmu log: updated tlb with page',target_page)
+		#print('mmu log: updated tlb with page',target_page)
 
 	def update_page_table(self, target_page, app_id):
-		#page-table resides in page-1
+		#page-table resides in page-1		
 		if len(self.ram_hashmap) < self.P - 1:
 			self.ram_hashmap[(target_page, app_id)] = time.time()
 		else:
-			evicted_entry = collections.OrderedDict(sorted(self.ram_hashmap.items(), reverse = True)).popitem()
+			evicted_entry = collections.OrderedDict(sorted(self.ram_hashmap.items())).popitem(0)
 			del self.ram_hashmap[evicted_entry[0]]
 			self.ram_hashmap[(target_page, app_id)] = time.time()
-		# print('mmu log: updated page table with page',target_page)
+			if self.P <= self.T and evicted_entry[0][0] in self.tlb_hashmap:
+				del self.tlb_hashmap[evicted_entry[0][0]]			
+		#print('mmu log: updated page table with page',target_page)
 
 	def update_counts(self,target_page):
-		# print('mmu log: servicing request for page',target_page)		
+		#print('mmu log: servicing request for page',target_page)		
 		self.service_start_time = self.total_access_time
 		self.request_count += 1
+		if target_page in self.tlb_hashmap:
+			self.tlb_hit_count += 1
 
 	def generate_physical_address(self, target_page):
 		self.total_access_time += self.Phit
-		# print('mmu log: serviced page request',target_page,'in',self.total_access_time-self.service_start_time,'us')		
+		# print(self.page_fault_count/self.request_count,self.total_access_time/self.request_count,sep=',')
+		#print('mmu log: serviced page request',target_page,'in',self.total_access_time-self.service_start_time,'us')		
 		self.updated_count = False
 		with self.page_fetched:
 			self.page_fetched.notify()
 
 	def display(self):
-		# print('mmu log: MMU details(P, Phit, Pmiss, T, Taccess):', self.P, self.Phit, self.Pmiss, self.T, self.Taccess)
+		#print('mmu log: MMU details(P, Phit, Pmiss, T, Taccess):', self.P, self.Phit, self.Pmiss, self.T, self.Taccess)
 		pass
